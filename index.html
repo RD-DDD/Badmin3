@@ -41,6 +41,10 @@
         button:hover {
             background-color: #45a049;
         }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
         .player-input {
             display: flex;
             gap: 10px;
@@ -51,6 +55,12 @@
             margin-bottom: 10px;
             border-radius: 4px;
         }
+        .field {
+            background-color: #e9e9e9;
+            padding: 5px;
+            margin-bottom: 5px;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
@@ -60,7 +70,7 @@
         const { useState, useEffect } = React;
 
         const BadmintonRotationApp = () => {
-            const [players, setPlayers] = useState(['', '']);
+            const [players, setPlayers] = useState(['', '', '', '']);
             const [pattern, setPattern] = useState([]);
             const [shareableLink, setShareableLink] = useState('');
 
@@ -89,8 +99,8 @@
 
             const generatePattern = () => {
                 const filledPlayers = players.filter(player => player.trim() !== '');
-                if (filledPlayers.length < 8) {
-                    alert('Please enter at least 8 player names.');
+                if (filledPlayers.length < 4) {
+                    alert('Please enter at least 4 player names.');
                     return;
                 }
 
@@ -98,12 +108,18 @@
                 let allPlayers = [...filledPlayers];
 
                 while (allPlayers.length > 0) {
-                    const playingPlayers = allPlayers.splice(0, 8);
-                    const restingPlayers = [...allPlayers];
-                    newPattern.push({ playing: playingPlayers, resting: restingPlayers });
+                    const round = [];
+                    while (allPlayers.length > 0 && round.length < 3) {
+                        const fieldPlayers = allPlayers.splice(0, 4);
+                        round.push(fieldPlayers);
+                    }
+                    if (allPlayers.length > 0) {
+                        round.push(allPlayers.splice(0, allPlayers.length));
+                    }
+                    newPattern.push(round);
 
-                    if (allPlayers.length < 8) {
-                        allPlayers = [...allPlayers, ...filledPlayers];
+                    if (allPlayers.length === 0) {
+                        allPlayers = [...filledPlayers];
                     }
                 }
 
@@ -119,6 +135,8 @@
                     alert('Shareable link copied to clipboard!');
                 });
             };
+
+            const isGenerateDisabled = players.filter(player => player.trim() !== '').length < 4;
 
             return (
                 <div className="container">
@@ -136,7 +154,7 @@
                         ))}
                         <button onClick={addPlayer}>Add Player</button>
                     </div>
-                    <button onClick={generatePattern}>Generate Pattern</button>
+                    <button onClick={generatePattern} disabled={isGenerateDisabled}>Generate Pattern</button>
                     {shareableLink && (
                         <div>
                             <input value={shareableLink} readOnly />
@@ -145,11 +163,14 @@
                     )}
                     {pattern.length > 0 && (
                         <div>
-                            {pattern.map((round, index) => (
-                                <div key={index} className="round">
-                                    <h3>Round {index + 1}</h3>
-                                    <p><strong>Playing:</strong> {round.playing.join(', ')}</p>
-                                    <p><strong>Resting:</strong> {round.resting.join(', ') || 'None'}</p>
+                            {pattern.map((round, roundIndex) => (
+                                <div key={roundIndex} className="round">
+                                    <h3>Round {roundIndex + 1}</h3>
+                                    {round.map((field, fieldIndex) => (
+                                        <div key={fieldIndex} className="field">
+                                            <p><strong>Field {fieldIndex + 1}:</strong> {field.join(', ')}</p>
+                                        </div>
+                                    ))}
                                 </div>
                             ))}
                         </div>
